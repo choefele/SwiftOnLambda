@@ -7,8 +7,8 @@ import Foundation
  */
 
 fileprivate 
-func echo(string:String) -> String {
-    return string
+func echo(fileHandle: FileHandle) -> Data {
+    return fileHandle.readDataToEndOfFile()
 }
 
 /*
@@ -18,15 +18,14 @@ func echo(string:String) -> String {
 
  */
 let g = Greeter()
-func greetResponse(string:String) -> String {
-    return g.service(string:string)
+func greetResponse(fileHandle: FileHandle) -> Data {
+    return g.service(fileHandle: fileHandle)
 }
 
 /*
 
 USER: if you want to define your own Lambda function in swift, just
-define a function `f:(String)->String` and pass it in as the argument
-to `readTransformPrint`.
+define a function `f:(FileHandle)->Data` and call it with `standardInput`.
 
 Be sure your function `f` expects a String containing JSON and returns
 a String containing JSON.
@@ -34,7 +33,9 @@ a String containing JSON.
 */
 
 // echo: reads a string and returns it exactly
-readTransformPrint(transform:echo)
+let result = echo(fileHandle: FileHandle.standardInput)
 
 // ALEXA: reads an Alexa Request envelope and returns a response
 //readTransformPrint(transform:greetResponse)
+//let result = greetResponse(fileHandle: FileHandle.standardInput)
+FileHandle.standardOutput.write(result)

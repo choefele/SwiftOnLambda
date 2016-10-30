@@ -1,4 +1,5 @@
 import Foundation
+import AlexaSkillsKit
 //import SwiftyJSON
 
 typealias ActiveJSONSerialization = Foundation.JSONSerialization
@@ -64,43 +65,13 @@ let APP_ID = "com.alexisgallagher.swiftgreeter"
  Alexa JSON interface
  
  */
-func serviceJson(jsonInput:JSONDictionary) -> AlexaResponseEnvelope?
+func serviceRequest() -> StandardResponse
 {
-  // parse the service request
-  guard let serviceRequest = AlexaRequestEnvelope(JSON:jsonInput) else
-  {
-    print("ERROR: unable to parse alexa request message")
-
-    return nil
-  }
-  
-  // parse the embedded Alexa request
-  let alexaRequestUnparsed = serviceRequest.request
-  
-  if let _ = LaunchRequest(JSON: alexaRequestUnparsed) {
-//    print("found launch request")
-  }
-  else if let _ = IntentRequest(JSON:alexaRequestUnparsed) {
-//    print("found intentRequest")
-  }
-  else {
-    print("did not find launch request or intent request")
-    let msg:String = "ERROR: did not detect a launch request"
-    print(msg)
-    return nil
-  }
-  
-  // LATER: here we would process details in a launch request or intent request object
-  
   // generate output speech
-  let outputSpeech = AlexaOutputSpeech(text: "Hello from Swift")
-  // build an AlexaResponse
-  let alexaResponse:AlexaResponse = AlexaResponse(outputSpeech: outputSpeech, card: nil, reprompt: nil, directives: nil, shouldEndSession: true)
-  
-  // build a service response
-  let serviceResponse:AlexaResponseEnvelope = AlexaResponseEnvelope(version: "1.0", sessionAttributes: nil, response: alexaResponse)
-  
-  return serviceResponse
+  let outputSpeech = OutputSpeech.plain(text: "Hello from Swift")
+  let standardResponse = StandardResponse(outputSpeech: outputSpeech, shouldEndSession: true)
+    
+  return standardResponse
 }
 
 public class Greeter
@@ -108,26 +79,28 @@ public class Greeter
   public init() { }
   
   /**
-   String->String wrapper for the JSON->JSON service above.
+   FileHandle->Data wrapper for the service method above.
    
    */
-  public func service(string s:String) -> String {
-    guard let data = s.data(using: String.Encoding.utf8) else { return "error serialized string to data" }
-    guard let jsonInput = (try? JSONSerialization.jsonObject(with: data, options: [])) as? JSONDictionary else {
-      return "error parsing JSON from string"
+  public func service(fileHandle: FileHandle) -> Data {
+    guard let requestParser = try? RequestParser(fileHandle: fileHandle),
+        let requestType = requestParser.parseRequestType() else {
+            return "error parsing JSON".data(using: .utf8)!
     }
     
-    guard let response:AlexaResponseEnvelope =   serviceJson(jsonInput:jsonInput)
-      else {
-        let msg = "did not generate response object"
-        print(msg)
-        return msg
+    let standardResponse: StandardResponse
+    switch requestType {
+    // LATER: here we would process details in a launch request or intent request object
+    default:
+        standardResponse = serviceRequest()
     }
     
-//    print(" will try to encode outputJSON=\(response.asJSON)")
-    let JSONString = response.asJSONString
-//    print(" self-encoded to JSON=\(JSONString)")
-    return JSONString
+    let responseGenerator = ResponseGenerator(standardResponse: standardResponse)
+    guard let jsonData = try? responseGenerator.generateJSON(options: .prettyPrinted) else {
+        return "error generating JOSN".data(using: .utf8)!
+    }
+    
+    return jsonData
   }
 }
 /*
