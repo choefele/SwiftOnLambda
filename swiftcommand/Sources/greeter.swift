@@ -79,11 +79,11 @@ public class Greeter
   public init() { }
   
   /**
-   FileHandle->Data wrapper for the service method above.
+   Data->Data wrapper for the service method above.
    
    */
-  public func service(fileHandle: FileHandle) -> Data {
-    guard let requestParser = try? RequestParser(fileHandle: fileHandle),
+  public func service(data: Data) -> Data {
+    guard let requestParser = try? RequestParser(with: data),
         let requestType = requestParser.parseRequestType() else {
             return "error parsing JSON".data(using: .utf8)!
     }

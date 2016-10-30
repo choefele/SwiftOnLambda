@@ -7,8 +7,8 @@ import Foundation
  */
 
 fileprivate 
-func echo(fileHandle: FileHandle) -> Data {
-    return fileHandle.readDataToEndOfFile()
+func echo(data: Data) -> Data {
+    return data
 }
 
 /*
@@ -18,8 +18,8 @@ func echo(fileHandle: FileHandle) -> Data {
 
  */
 let g = Greeter()
-func greetResponse(fileHandle: FileHandle) -> Data {
-    return g.service(fileHandle: fileHandle)
+func greetResponse(data: Data) -> Data {
+    return g.service(data: data)
 }
 
 /*
@@ -32,10 +32,12 @@ a String containing JSON.
 
 */
 
+let data = FileHandle.standardInput.readDataToEndOfFile()
+
 // echo: reads a string and returns it exactly
-let result = echo(fileHandle: FileHandle.standardInput)
+let result = echo(data: data)
 
 // ALEXA: reads an Alexa Request envelope and returns a response
 //readTransformPrint(transform:greetResponse)
-//let result = greetResponse(fileHandle: FileHandle.standardInput)
+//let result = greetResponse(data: data)
 FileHandle.standardOutput.write(result)
